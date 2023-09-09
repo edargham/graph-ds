@@ -86,10 +86,30 @@ namespace gtor {
 
       for (int i { initial_node }; i < _vertices.size(); i++) {
         if (_vertices.at(i).mark() == 0) {
-          last = 
+          last = bfs(initial_node);
         }
       }
+
+      return last;
     }
+
+    template<typename U = std::nullptr_t>
+    Vertex<T> bfs_all(U callback=nullptr) {
+      for (Vertex<T>& vtx: _vertices) {
+        vtx.set_mark(0);
+      }
+
+      int initial_node { 0 };
+      Vertex<T> last { };
+
+      for (int i { initial_node }; i < _vertices.size(); i++) {
+        if (_vertices.at(i).mark() == 0) {
+          last = bfs(initial_node, callback);
+        }
+      }
+
+      return last;
+    } 
 
     Vertex<T> bfs(void) {
       int initial_node { 0 };

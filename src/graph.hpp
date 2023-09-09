@@ -86,7 +86,7 @@ namespace gtor {
 
       for (int i { initial_node }; i < _vertices.size(); i++) {
         if (_vertices.at(i).mark() == 0) {
-          last = bfs(initial_node);
+          last = bfs(i);
         }
       }
 
@@ -104,7 +104,9 @@ namespace gtor {
 
       for (int i { initial_node }; i < _vertices.size(); i++) {
         if (_vertices.at(i).mark() == 0) {
-          last = bfs(initial_node, callback);
+          std::cout << i << "\n";
+          last = bfs(i, callback);
+          std::cout << "\n";
         }
       }
 
@@ -156,8 +158,9 @@ namespace gtor {
       if constexpr (std::is_void_v<decltype(callback(_vertices.at(0)))>) {
         callback(_vertices.at(initial_node));
       } else {
-        auto z { callback(_vertices.at(initial_node)) };
-        if (z) {
+        auto output { callback(_vertices.at(initial_node)) };
+        if (output) {
+          _vertices[initial_node].set_mark(1);
           return _vertices.at(initial_node);
         }
       }
@@ -182,6 +185,7 @@ namespace gtor {
             } else {
               auto output { callback(_vertices.at(x)) };
               if (output) {
+                _vertices[x].set_mark(1);
                 return _vertices.at(x);
               }
             }
@@ -226,6 +230,16 @@ namespace gtor {
       std::queue<int> bfs_queue {};
       bfs_queue.emplace(initial_node_idx);
 
+      if constexpr (std::is_void_v<decltype(callback(_vertices.at(0)))>) {
+        callback(_vertices.at(initial_node_idx));
+      } else {
+        auto output { callback(_vertices.at(initial_node_idx)) };
+        if (output) {
+          _vertices[initial_node_idx].set_mark(1);
+          return _vertices.at(initial_node_idx);
+        }
+      }
+
       _vertices[initial_node_idx].set_mark(1);
 
       Vertex<T> last { _vertices.at(initial_node_idx) };
@@ -246,6 +260,7 @@ namespace gtor {
             } else {
               auto output { callback(_vertices.at(x)) };
               if (output) {
+                _vertices[x].set_mark(1);
                 return _vertices.at(x);
               }
             }

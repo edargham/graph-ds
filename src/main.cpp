@@ -24,12 +24,14 @@ int main(void) {
 
   gtor::Graph<char, graph_size> g_v_e { vtxs, edges };
 
+  char tgt { 'B' };
 
-  auto lambd = [&g_v_e, graph_size] (gtor::Vertex<char>& vrt) {
+  auto lambd = [&g_v_e, graph_size, &tgt] (gtor::Vertex<char>& vrt) {
     std::cout << vrt.datum() << " ";
+    return tgt == vrt.datum();
   };
 
-  gtor::Vertex<char> target { g_v_e.bfs(lambd) };
+  gtor::Vertex<char> target { g_v_e.bfs_all(lambd) };
 
   std::cout << "Target found: " << target.datum() << "\n";
 

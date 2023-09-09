@@ -2,5 +2,6 @@
   "files.associations": {
     "array": "cpp",
     "functional": "cpp"
-  }
+  },
+  "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

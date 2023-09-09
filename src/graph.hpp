@@ -11,7 +11,6 @@
 #include <stack>
 #include <functional>
 #include <optional>
-// #include <cstdarg>
 #include <type_traits>
 
 namespace gtor {
@@ -94,19 +93,21 @@ namespace gtor {
     }
 
     template<typename U = std::nullptr_t>
-    Vertex<T> bfs_all(U callback=nullptr) {
+    std::optional<Vertex<T>> bfs_all(U callback=nullptr) {
       for (Vertex<T>& vtx: _vertices) {
         vtx.set_mark(0);
       }
 
       int initial_node { 0 };
-      Vertex<T> last { };
+      std::optional<Vertex<T>> last { std::nullopt };
 
       for (int i { initial_node }; i < _vertices.size(); i++) {
         if (_vertices.at(i).mark() == 0) {
-          std::cout << i << "\n";
           last = bfs(i, callback);
-          std::cout << "\n";
+          
+          if (last) {
+            return last;
+          }
         }
       }
 
@@ -145,7 +146,7 @@ namespace gtor {
     }
 
     template<typename U = std::nullptr_t>
-    Vertex<T> bfs(U callback=nullptr) {
+    std::optional<Vertex<T>> bfs(U callback=nullptr) {
       int initial_node { 0 };
 
       for (Vertex<T>& v: _vertices) {
@@ -166,8 +167,6 @@ namespace gtor {
       }
 
       _vertices[initial_node].set_mark(1);
-
-      Vertex<T> last { _vertices.at(initial_node) };
 
       while (!bfs_queue.empty()) {
         int idx { bfs_queue.front() };
@@ -191,12 +190,11 @@ namespace gtor {
             }
             
             _vertices[x].set_mark(1);
-            last = _vertices.at(x);
           }
         }
       }
 
-      return last;
+      return std::nullopt;
     }
 
     Vertex<T> bfs(int initial_node_idx=0) {
@@ -226,7 +224,7 @@ namespace gtor {
     }
 
     template<typename U = std::nullptr_t>
-    Vertex<T> bfs(int initial_node_idx=0, U callback=nullptr) {
+    std::optional<Vertex<T>> bfs(int initial_node_idx=0, U callback=nullptr) {
       std::queue<int> bfs_queue {};
       bfs_queue.emplace(initial_node_idx);
 
@@ -241,8 +239,6 @@ namespace gtor {
       }
 
       _vertices[initial_node_idx].set_mark(1);
-
-      Vertex<T> last { _vertices.at(initial_node_idx) };
 
       while (!bfs_queue.empty()) {
         int idx { bfs_queue.front() };
@@ -266,12 +262,11 @@ namespace gtor {
             }
 
             _vertices[x].set_mark(1);
-            last = _vertices.at(x);
           }
         }
       }
 
-      return last;
+      return std::nullopt;
     }
 
     // Vertex<T> dfs(std::function<bool(T, std::optional<T>)> callback, const std::optional<T>& datum) {

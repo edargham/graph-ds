@@ -34,6 +34,10 @@ namespace gtor {
             }
           }
         } 
+
+        for (int i { 0 }; i < N; i++) {
+          _vertices[i].set_order(i);
+        }
       }
     }
 
@@ -47,7 +51,11 @@ namespace gtor {
     ~Graph(void) {
 
     }
-    
+
+    std::array<Vertex<T>, N> vertices(void) const {
+      return _vertices;
+    } 
+
     std::vector<int> neighbors(int vert_idx) {
       std::vector<int> nbs { };
 
@@ -56,7 +64,7 @@ namespace gtor {
       }
 
       for (int i { 0 }; i < _adj_mat.at(vert_idx).size(); i++) {
-        if (_adj_mat.at(vert_idx).at(i) == 1) {
+        if (_adj_mat.at(vert_idx).at(i) != 0) {
           nbs.emplace_back(i);
         }
       }
@@ -79,8 +87,7 @@ namespace gtor {
         vtx.set_mark(0);
       }
 
-      int initial_node { 0 };
-
+      int initial_node { _vertices.at(0).order() };
       Vertex<T> last { };
 
       for (int i { initial_node }; i < _vertices.size(); i++) {
@@ -98,7 +105,7 @@ namespace gtor {
         vtx.set_mark(0);
       }
 
-      int initial_node { 0 };
+      int initial_node { _vertices.at(0).order() };
       std::optional<Vertex<T>> last { std::nullopt };
 
       for (int i { initial_node }; i < _vertices.size(); i++) {
@@ -267,6 +274,28 @@ namespace gtor {
       }
 
       return std::nullopt;
+    }
+
+    void shortest_path_dijkstra(std::array<float, N>& distances, Vertex<T>& vtx) {
+      std::queue<int> spd_queue { };
+      spd_queue.emplace( vtx.order() );
+
+      distances[vtx.order()] = 0;
+
+      while (!spd_queue.empty()) {
+        int idx { spd_queue.front() };
+        spd_queue.pop();
+
+        std::vector<int> neigh { neighbors(idx) };
+
+        for (int x: neigh) {
+          float dist { distances.at(idx) + _adj_mat.at(idx).at(x) };
+          if (distances.at(x) > dist) {
+            spd_queue.emplace(x);
+            distances[x] = dist;
+          }
+        }
+      }
     }
 
     // Vertex<T> dfs(std::function<bool(T, std::optional<T>)> callback, const std::optional<T>& datum) {

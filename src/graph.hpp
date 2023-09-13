@@ -11,9 +11,42 @@
 #include <stack>
 #include <functional>
 #include <optional>
+#include <algorithm>
 #include <type_traits>
 
 namespace gtor {
+  struct EdgeList
+  {
+    int idx_u;
+    int idx_v;
+    int weight;
+
+    bool operator >(EdgeList& el) const {
+      return weight > el.weight;
+    }
+
+    bool operator >=(EdgeList& el) const {
+      return weight >= el.weight;
+    }
+    
+    bool operator <(EdgeList& el) const {
+      return weight < el.weight;
+    }
+
+    bool operator <=(EdgeList& el) const {
+      return weight <= el.weight;
+    }
+
+    bool operator ==(EdgeList& el) const {
+      return weight == el.weight;
+    }
+
+    bool operator !=(EdgeList& el) const {
+      return weight != el.weight;
+    }
+  } ;
+    
+
   template <typename T, int N>
   class Graph {
     private:
@@ -80,6 +113,22 @@ namespace gtor {
       }
 
       return -1;
+    }
+
+    void connect(int i, int j, int weight=1) {
+      _adj_mat[i][j] = weight;
+
+      if (!_directed) {
+        _adj_mat[j][i] = weight
+      }
+    }
+
+    void disconnect(int i, int j) {
+      _adj_mat[i][j] = 0;
+
+      if (!_directed) {
+        _adj_mat[j][i] = 0;
+      }
     }
 
     Vertex<T> bfs_all(void) {
@@ -296,6 +345,25 @@ namespace gtor {
           }
         }
       }
+    }
+
+    std::vector<EdgeList> to_edge_list(void) {
+      std::vector<EdgeList> edgeList { };
+      
+      for (size_t i { 0 }; i < N; i++) {
+        for (size_t j { i+1 }; j < N; j++) {
+          if (_adj_mat.at(i)(j)) {
+            edgeList.emplace_back(EdgeList { i, j, _adj_mat.at(i)(j) });
+          }
+        }
+      }
+
+      return edgeList;
+    }
+
+    void union_find_krus(void) {
+      std::vector<EdgeList> edges { to_edge_list() };
+      std::sort(edges.begin(), edges.end(), [](const EdgeList& a, const EdgeList& b) { return a > b });
     }
 
     // Vertex<T> dfs(std::function<bool(T, std::optional<T>)> callback, const std::optional<T>& datum) {

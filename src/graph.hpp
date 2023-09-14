@@ -11,6 +11,7 @@
 #include <stack>
 #include <functional>
 #include <optional>
+#include <unordered_map>
 #include <algorithm>
 #include <type_traits>
 
@@ -21,31 +22,35 @@ namespace gtor {
     int idx_v;
     int weight;
 
-    bool operator >(EdgeList& el) const {
+    bool operator >(const EdgeList& el) const {
       return weight > el.weight;
     }
 
-    bool operator >=(EdgeList& el) const {
+    bool operator >=(const EdgeList& el) const {
       return weight >= el.weight;
     }
     
-    bool operator <(EdgeList& el) const {
+    bool operator <(const EdgeList& el) const {
       return weight < el.weight;
     }
 
-    bool operator <=(EdgeList& el) const {
+    bool operator <=(const EdgeList& el) const {
       return weight <= el.weight;
     }
 
-    bool operator ==(EdgeList& el) const {
+    bool operator ==(const EdgeList& el) const {
       return weight == el.weight;
     }
 
-    bool operator !=(EdgeList& el) const {
+    bool operator !=(const EdgeList& el) const {
       return weight != el.weight;
     }
-  } ;
+  };
     
+  struct MstList {
+    std::vector<EdgeList> mst;
+    size_t weight;
+  };
 
   template <typename T, int N>
   class Graph {
@@ -119,7 +124,7 @@ namespace gtor {
       _adj_mat[i][j] = weight;
 
       if (!_directed) {
-        _adj_mat[j][i] = weight
+        _adj_mat[j][i] = weight;
       }
     }
 
@@ -361,9 +366,61 @@ namespace gtor {
       return edgeList;
     }
 
-    void union_find_krus(void) {
+    int find_set(std::unordered_map<int, int>& parent, int idx_u) {
+      if (parent.find(idx_u) == parent.end()) {  // Key not found
+        return -1;  // or handle it in another way suitable for your program
+      }
+      if (parent[idx_u] != idx_u) {
+        parent[idx_u] = find_set(parent, parent[idx_u]);
+      }
+      return parent[idx_u]; 
+    }
+
+    void union_set(std::unordered_map<int, int>& parent, std::unordered_map<int, int>& rank, int idx_u, int idx_v) {
+      idx_u = find_set(idx_u);
+      idx_v = find_set(idx_v);
+
+      if (rank[idx_u] > rank[idx_v]) {
+        parent[idx_v] = idx_u;
+      } else {
+        parent[idx_u] = idx_v;
+        if (rank[idx_u] == rank[idx_v]) {
+          rank[idx_v] += 1;
+        }
+      }
+    }
+
+    MstList union_find_krus(void) {
       std::vector<EdgeList> edges { to_edge_list() };
-      std::sort(edges.begin(), edges.end(), [](const EdgeList& a, const EdgeList& b) { return a > b });
+      std::sort(edges.begin(), edges.end(), [](const EdgeList& a, const EdgeList& b) { return a > b; });
+
+      std::unordered_map<int, int> parent { };
+      std::unordered_map<int, int>   rank { };
+
+      for (const EdgeList& el: edges) {
+        parent[el.idx_u] = el.idx_u;
+        parent[el.idx_v] = el.idx_v;
+
+        rank[el.idx_u] = 0;
+        rank[el.idx_v] = 0;
+      }
+
+      std::vector<EdgeList> mst { };
+      size_t mst_weight { 0 };
+
+      MstList mst_list { };
+      mst_list.mst    = mst;
+      mst_list.weight = mst_weight;
+
+      for (const EdgeList& el: edges) {
+        if (find_set(parent[el.idx_u]) != find_set(parent[el.idx_v])) {
+          mst_list.mst.emplace_back(el);
+          mst_list.weight += el.weight;
+          union_set(parent, rank, el.idx_u, el.idx_v); 
+        }
+      }
+
+      return mst_list;
     }
 
     // Vertex<T> dfs(std::function<bool(T, std::optional<T>)> callback, const std::optional<T>& datum) {

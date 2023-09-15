@@ -367,8 +367,8 @@ namespace gtor {
     }
 
     int find_set(std::unordered_map<int, int>& parent, int idx_u) {
-      if (parent.find(idx_u) == parent.end()) {  // Key not found
-        return -1;  // or handle it in another way suitable for your program
+      if (parent.find(idx_u) == parent.end()) {  
+        return -1;  
       }
       if (parent[idx_u] != idx_u) {
         parent[idx_u] = find_set(parent, parent[idx_u]);
@@ -390,7 +390,7 @@ namespace gtor {
       }
     }
 
-    MstList union_find_krus(void) {
+    MstList union_find(void) {
       std::vector<EdgeList> edges { to_edge_list() };
       std::sort(edges.begin(), edges.end(), [](const EdgeList& a, const EdgeList& b) { return a > b; });
 

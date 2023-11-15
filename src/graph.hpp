@@ -10,36 +10,32 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <unordered_set>
 #include <functional>
 #include <optional>
-#include <unordered_map>
 #include <algorithm>
 #include <type_traits>
 
 namespace gtor {
-  template <typename T, int N>
+  template <typename T, size_t N>
   class Graph {
     private:
-      std::array<std::array<int, N>, N> _adj_mat;
+      std::array<std::array<size_t, N>, N> _adj_mat;
       std::array<Vertex<T>, N> _vertices;
       bool _directed;
     public:
-      Graph(std::array<Vertex<T>, N>& vertices, std::array<std::array<int, N>, N>& adj_mat, bool directed=false):
+      Graph(std::array<Vertex<T>, N>& vertices, std::array<std::array<size_t, N>, N>& adj_mat, bool directed=false):
       _adj_mat  {  adj_mat },
       _vertices { vertices },
       _directed { directed } { 
         if (!directed) {
           // Assert that the expected graph is undirected.
-          for (int idx { 0 }; idx < _adj_mat.size(); idx++) {
-            for(int jdx { idx + 1 }; jdx < _adj_mat.size(); jdx ++) {
+          for (size_t idx { 0 }; idx < _adj_mat.size(); idx++) {
+            for(size_t jdx { idx + 1 }; jdx < _adj_mat.size(); jdx ++) {
               if (_adj_mat.at(idx).at(jdx) != _adj_mat.at(jdx).at(idx)) {
                 throw std::runtime_error ( "Expected undirected graph, got directed graph." );
               }
             }
-          } 
-
-          for (int i { 0 }; i < N; i++) {
-            _vertices[i].set_order(i);
           }
         }
       }
@@ -51,18 +47,27 @@ namespace gtor {
 
       ~Graph(void) { }
 
+      size_t index_of_vtx(const Vertex<T>& vtx) const {
+        auto it = std::find(_vertices.begin(), _vertices.end(), vtx);
+
+        if (it != _vertices.end()) {
+          return std::distance(_vertices.begin(), it);
+        } else {
+          return _vertices.size();
+        }
+      }
       std::array<Vertex<T>, N> vertices(void) const {
         return _vertices;
       } 
 
-      std::vector<int> neighbors(int vert_idx) {
-        std::vector<int> nbs { };
+      std::vector<size_t> neighbors(size_t vert_idx) {
+        std::vector<size_t> nbs { };
 
         if (vert_idx > _adj_mat.size()) {
           throw std::runtime_error { "Index specified exceeds graph width." };
         }
 
-        for (int i { 0 }; i < _adj_mat.at(vert_idx).size(); i++) {
+        for (size_t i { 0 }; i < _adj_mat.at(vert_idx).size(); i++) {
           if (_adj_mat.at(vert_idx).at(i) != 0) {
             nbs.emplace_back(i);
           }
@@ -71,17 +76,17 @@ namespace gtor {
         return nbs;
       }
 
-      int is_neighbor(const std::array<int, N>& v_e) {
-        for (int i { 0 }; i < N; i++) {
+      size_t is_neighbor(const std::array<size_t, N>& v_e) {
+        for (size_t i { 0 }; i < N; i++) {
           if (v_e.at(i) != 0 && _vertices.at(i).mark() == 0 ) {
             return i;
           }
         }
 
-        return -1;
+        return N;
       }
 
-      void connect(int i, int j, int weight=1) {
+      void connect(size_t i, size_t j, size_t weight=1) {
         _adj_mat[i][j] = weight;
 
         if (!_directed) {
@@ -89,7 +94,7 @@ namespace gtor {
         }
       }
 
-      void disconnect(int i, int j) {
+      void disconnect(size_t i, size_t j) {
         _adj_mat[i][j] = 0;
 
         if (!_directed) {
@@ -99,16 +104,14 @@ namespace gtor {
 
       template<typename U = std::nullptr_t>
       std::optional<Vertex<T>> bfs_all(U callback=nullptr) {
-        for (Vertex<T>& vtx: _vertices) {
-          vtx.set_mark(0);
-        }
-
-        int initial_node { _vertices.at(0).order() };
+        std::optional<std::reference_wrapper<std::unordered_set<size_t>>> visited { };
+        // std::unordered_set<size_t> visited { };
+        size_t initial_node { 0 };
         std::optional<Vertex<T>> last { std::nullopt };
 
-        for (int i { initial_node }; i < _vertices.size(); i++) {
-          if (_vertices.at(i).mark() == 0) {
-            last = bfs(i, callback, true);
+        for (size_t i { initial_node }; i < _vertices.size(); i++) {
+          if (visited->get().find(i) == visited->get().end()) {
+            last = bfs(i, callback, true, visited);
             
             if (last) {
               return last;
@@ -120,36 +123,41 @@ namespace gtor {
       } 
 
       template<typename U = std::nullptr_t>
-      std::optional<Vertex<T>> bfs(int initial_node_idx=0, U callback=nullptr, bool searching_all=false) {
-        if (!searching_all) {
-          for (Vertex<T>& vtx: _vertices) {
-            vtx.set_mark(0);
-          }
+      std::optional<Vertex<T>> bfs
+      (
+        size_t initial_node_idx=0, 
+        U callback=nullptr, 
+        bool searching_all=false,
+        std::optional<std::reference_wrapper<std::unordered_set<size_t>>> visited=std::nullopt
+      ) {
+        std::cout << "here.";
+        if (!searching_all || !visited.has_value()) {
+          visited = std::optional<std::reference_wrapper<std::unordered_set<size_t>>> {};
         }
 
-        std::queue<int> bfs_queue {};
+        std::queue<size_t> bfs_queue {};
         bfs_queue.emplace(initial_node_idx);
 
         if constexpr (std::is_void_v<decltype(callback(_vertices.at(initial_node_idx)))>) {
+          std::cout << "sda";
           callback(_vertices.at(initial_node_idx));
         } else {
           auto output { callback(_vertices.at(initial_node_idx)) };
           if (output) {
-            _vertices[initial_node_idx].set_mark(1);
             return _vertices.at(initial_node_idx);
           }
         }
         
-        _vertices[initial_node_idx].set_mark(1);
+        visited->get().insert(initial_node_idx);
 
         while (!bfs_queue.empty()) {
-          int idx { bfs_queue.front() };
+          size_t idx { bfs_queue.front() };
           bfs_queue.pop();
 
-          std::vector<int> neigh { neighbors(idx) };
+          std::vector<size_t> neigh { neighbors(idx) };
 
-          for (int x: neigh) {
-            if (_vertices.at(x).mark() == 0) {
+          for (size_t x: neigh) {
+            if (visited->get().find(x) != visited->get().end()) {
               bfs_queue.emplace(x);
 
               // TODO - Do any processing you want here.
@@ -158,12 +166,11 @@ namespace gtor {
               } else {
                 auto output { callback(_vertices.at(x)) };
                 if (output) {
-                  _vertices[x].set_mark(1);
                   return _vertices.at(x);
                 }
               }
               
-              _vertices[x].set_mark(1);
+              visited->get().insert(x);
             }
           }
         }
@@ -172,15 +179,13 @@ namespace gtor {
       }
 
       std::optional<Vertex<T>> bfs_all(void) {
-        for (Vertex<T>& vtx: _vertices) {
-          vtx.set_mark(0);
-        }
+        std::unordered_set<size_t> visited { };
 
-        int initial_node { _vertices.at(0).order() };
+        size_t initial_node { 0 };
         std::optional<Vertex<T>> last { std::nullopt };
 
-        for (int i { initial_node }; i < _vertices.size(); i++) {
-          if (_vertices.at(i).mark() == 0) {
+        for (size_t i { initial_node }; i < _vertices.size(); i++) {
+          if (visited.find(i) != visited.end()) {
             last = bfs(i, true);
             
             if (last) {
@@ -192,28 +197,31 @@ namespace gtor {
         return last;
       } 
 
-      std::optional<Vertex<T>> bfs(int initial_node_idx=0, bool searching_all=false) {
-        if (!searching_all) {
-          for (Vertex<T>& vtx: _vertices) {
-            vtx.set_mark(0);
-          }
+      std::optional<Vertex<T>> bfs
+      (
+        size_t initial_node_idx=0, 
+        bool searching_all=false,
+        std::optional<std::reference_wrapper<std::unordered_set<size_t>>> visited=std::nullopt
+      ) {
+        if (!searching_all || !visited.has_value()) {
+          visited = std::optional<std::reference_wrapper<std::unordered_set<size_t>>> {};
         }
 
-        std::queue<int> bfs_queue {};
+        std::queue<size_t> bfs_queue {};
         bfs_queue.emplace(initial_node_idx);
         
-        _vertices[initial_node_idx].set_mark(1);
+        visited->get().insert(initial_node_idx);
 
         while (!bfs_queue.empty()) {
-          int idx { bfs_queue.front() };
+          size_t idx { bfs_queue.front() };
           bfs_queue.pop();
 
-          std::vector<int> neigh { neighbors(idx) };
+          std::vector<size_t> neigh { neighbors(idx) };
 
-          for (int x: neigh) {
-            if (_vertices.at(x).mark() == 0) {
+          for (size_t x: neigh) {
+            if (visited->get().find(x) != visited->get().end()) {
               bfs_queue.emplace(x);              
-              _vertices[x].set_mark(1);
+              visited->get().insert(x);
             }
           }
         }
@@ -222,18 +230,19 @@ namespace gtor {
       }
 
       void shortest_path_dijkstra(std::array<float, N>& distances, Vertex<T>& vtx) {
-        std::priority_queue<int> spd_queue { };
-        spd_queue.emplace( vtx.order() );
+        std::priority_queue<size_t> spd_queue { };
+        size_t initial_idx { index_of_vtx(vtx) };
 
-        distances[vtx.order()] = 0;
+        spd_queue.emplace(initial_idx);
+        distances[initial_idx] = 0;
 
         while (!spd_queue.empty()) {
-          int idx { spd_queue.top() };
+          size_t idx { spd_queue.top() };
           spd_queue.pop();
 
-          std::vector<int> neigh { neighbors(idx) };
+          std::vector<size_t> neigh { neighbors(idx) };
 
-          for (int x: neigh) {
+          for (size_t x: neigh) {
             float dist { distances.at(idx) + _adj_mat.at(idx).at(x) };
             if (distances.at(x) > dist) {
               spd_queue.emplace(x);
@@ -249,10 +258,10 @@ namespace gtor {
           vtx.set_mark(0);
         }
 
-        int initial_node { _vertices.at(0).order() };
+        size_t initial_node { _vertices.at(0).order() };
         std::optional<Vertex<T>> last { std::nullopt };
 
-        for (int i { initial_node }; i < _vertices.size(); i++) {
+        for (size_t i { initial_node }; i < _vertices.size(); i++) {
           if (_vertices.at(i).mark() == 0) {
             last = dfs(i, pre_callback, post_callback, true);
             
@@ -268,7 +277,7 @@ namespace gtor {
       template<typename U = std::nullptr_t, typename V = std::nullptr_t>
       std::optional<Vertex<T>> dfs
       (
-        int initial_node_idx=0, 
+        size_t initial_node_idx=0, 
         U pre_callback=nullptr, 
         V post_callback=nullptr, 
         bool searching_all=false
@@ -279,7 +288,7 @@ namespace gtor {
           }
         }
 
-        std::stack<int> dfs_stack {};
+        std::stack<size_t> dfs_stack {};
         dfs_stack.emplace(initial_node_idx);
         _vertices[initial_node_idx].set_mark(1);
 
@@ -296,10 +305,10 @@ namespace gtor {
         Vertex<T> last { _vertices.at(initial_node_idx) };
 
         while (!dfs_stack.empty()) {
-          int idx { dfs_stack.top() };
-          int next { is_neighbor(_adj_mat.at(idx)) };
+          size_t idx { dfs_stack.top() };
+          size_t next { is_neighbor(_adj_mat.at(idx)) };
 
-          if (next != -1) {
+          if (next != N) {
             _vertices[next].set_mark(1);
             dfs_stack.emplace(next);
 
@@ -314,7 +323,7 @@ namespace gtor {
               }
             }
           } else {
-            int l { dfs_stack.top() };
+            size_t l { dfs_stack.top() };
             dfs_stack.pop();
             
             // TODO - Do any postprocessing you want here.
@@ -340,10 +349,10 @@ namespace gtor {
           vtx.set_mark(0);
         }
 
-        int initial_node { _vertices.at(0).order() };
+        size_t initial_node { _vertices.at(0).order() };
         std::optional<Vertex<T>> last { std::nullopt };
 
-        for (int i { initial_node }; i < _vertices.size(); i++) {
+        for (size_t i { initial_node }; i < _vertices.size(); i++) {
           if (_vertices.at(i).mark() == 0) {
             last = dfs(i, true);
             
@@ -356,28 +365,28 @@ namespace gtor {
         return last;
       } 
 
-      std::optional<Vertex<T>> dfs(int initial_node_idx=0, bool searching_all=false) {
+      std::optional<Vertex<T>> dfs(size_t initial_node_idx=0, bool searching_all=false) {
         if (!searching_all) {
           for (Vertex<T>& vtx: _vertices) {
             vtx.set_mark(0);
           }
         }
 
-        std::stack<int> dfs_stack {};
+        std::stack<size_t> dfs_stack {};
         dfs_stack.emplace(initial_node_idx);
         _vertices[initial_node_idx].set_mark(1);
 
         Vertex<T> last { _vertices.at(initial_node_idx) };
 
         while (!dfs_stack.empty()) {
-          int idx { dfs_stack.top() };
-          int next { is_neighbor(_adj_mat.at(idx)) };
+          size_t idx { dfs_stack.top() };
+          size_t next { is_neighbor(_adj_mat.at(idx)) };
 
-          if (next != -1) {
+          if (next != N) {
             _vertices[next].set_mark(1);
             dfs_stack.emplace(next);
           } else {
-            int l { dfs_stack.top() };
+            size_t l { dfs_stack.top() };
             dfs_stack.pop();
             
             last = _vertices.at(l);

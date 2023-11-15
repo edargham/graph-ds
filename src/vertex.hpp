@@ -1,81 +1,77 @@
 #pragma once
+
+#include "utils/uuid.hpp"
+
 #include <memory>
+#include <string>
 
 namespace gtor {
   template<typename T>
   class Vertex {
   private:
-    T       _datum;
-    int      _mark;
-    int _order_idx;
-
+    T           _datum;
+    std::string    _id;
   public:
     
     Vertex(void)=default;
 
-    Vertex(T datum, int order=0):
-      _datum         { datum },
-      _mark              { 0 },
-      _order_idx      { order }
+    Vertex(T datum):
+      _id     { generate_uuid_v4() },
+      _datum               { datum }
     {}
 
     Vertex(const Vertex<T>& v):
-      _datum        { v._datum },
-      _mark         {  v._mark },
-      _order_idx { v._order_idx }
+      _id       { v._id },
+      _datum { v._datum }
     { }
 
     Vertex(const Vertex<T>&& v):
-      _datum { v._datum },
-      _mark  {  v._mark }
+      _id       { v._id },
+      _datum { v._datum }
     { }    
 
     ~Vertex(void) { }
 
     Vertex<T>& operator=(const Vertex<T>& v) {
       if (this == &v) {
-          return *this;
+        return *this;
       }
 
+      _id = v.mark();
       _datum = v.datum();
-      _mark = v.mark();
 
       return *this;
     }
 
     Vertex<T>& operator=(const Vertex<T>&& v) {
       if (this == &v) {
-          return *this;
+        return *this;
       }
       
+      _id = v.id();
       _datum = v.datum();
-      _mark = v.mark();
       
       return *this;
+    }
+
+    bool operator==(const Vertex<T>& v) const {
+      return _id == v.id();
+    }
+
+    bool operator!=(const Vertex<T>& v) const {
+      return _id != v.id();
     }
 
     T datum(void) const {
       return _datum;
     }
 
-    int mark(void) const {
-      return _mark;
-    }
-
-    int order(void) const {
-      return _order_idx;
+    std::string id(void) const {
+      return _id;
     }
 
     std::shared_ptr<T> datum_pt(void) {
       return std::make_shared<T>(_datum);
-    }
-
-    void set_mark(int mark) {
-      _mark = mark;
-    }
-
-    void set_order(int order) {
-      _order_idx = order;
     }
   };
 }

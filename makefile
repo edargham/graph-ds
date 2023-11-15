@@ -22,13 +22,17 @@
 
 .PHONY: clean clean_build rebuild
 
-graph_ds: ./build/main.o
+graph_ds: ./build/main.o ./build/uuid.o
 	mkdir -p ./build/
-	g++ -std=c++17 -O3 ./build/main.o -o graph_ds.out
+	g++ -std=c++17 -O3 ./build/main.o ./build/uuid.o -o graph_ds.out
 
-./build/main.o: ./src/main.cpp
+./build/main.o: ./src/main.cpp ./build/uuid.o
 	mkdir -p ./build/
 	g++ -std=c++17 -O3 -c ./src/main.cpp -o ./build/main.o
+
+./build/uuid.o: ./src/utils/uuid.cpp
+	mkdir -p ./build/
+	g++ -std=c++17 -O3 -c ./src/utils/uuid.cpp -o ./build/uuid.o
 
 clean_build:
 	rm -rf ./build/*.o

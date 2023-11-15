@@ -12,20 +12,20 @@ bool is_equal(char a, char b) {
 
 
 int main(void) {
-  const int graph_size { 5 };
+  const size_t graph_size { 5 };
   std::array<gtor::Vertex<char>, graph_size> vtxs { 'A', 'B', 'C', 'D', 'E' };
-  std::array<std::array<int, graph_size>, graph_size> edges {
+  std::array<std::array<size_t, graph_size>, graph_size> edges {
     //                            A  B  C  D  E
-    std::array<int, graph_size> { 0, 5, 0, 8, 0 }, // A
-    std::array<int, graph_size> { 5, 0, 1, 2, 0 }, // B
-    std::array<int, graph_size> { 0, 1, 1, 0, 6 }, // C
-    std::array<int, graph_size> { 8, 2, 0, 0, 0 }, // D
-    std::array<int, graph_size> { 0, 0, 6, 0, 0 }  // E
+    std::array<size_t, graph_size> { 0, 5, 0, 8, 0 }, // A
+    std::array<size_t, graph_size> { 5, 0, 0, 2, 0 }, // B
+    std::array<size_t, graph_size> { 0, 0, 1, 0, 6 }, // C
+    std::array<size_t, graph_size> { 8, 2, 0, 0, 0 }, // D
+    std::array<size_t, graph_size> { 0, 0, 6, 0, 0 }  // E
   };
 
   gtor::Graph<char, graph_size> g_v_e { vtxs, edges };
 
-  char tgt { 'F' };
+  char tgt { 'E' };
 
   std::array<float, graph_size> distances {  };
 
@@ -38,7 +38,7 @@ int main(void) {
     return tgt == vrt.datum();
   };
 
-  std::optional<gtor::Vertex<char>> target { g_v_e.dfs_all(search_lambda, [](gtor::Vertex<char>& vrt) {}) };
+  std::optional<gtor::Vertex<char>> target { g_v_e.bfs_all(search_lambda) };
 
   if (target) {
     std::cout << "Target found: " << target.value().datum() << "\n";

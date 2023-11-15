@@ -44,7 +44,26 @@
     "ostream": "cpp",
     "stdexcept": "cpp",
     "streambuf": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "cstring": "cpp",
+    "ctime": "cpp",
+    "ios": "cpp",
+    "list": "cpp",
+    "queue": "cpp",
+    "ranges": "cpp",
+    "span": "cpp",
+    "stack": "cpp",
+    "xfacet": "cpp",
+    "xhash": "cpp",
+    "xiosbase": "cpp",
+    "xlocale": "cpp",
+    "xlocinfo": "cpp",
+    "xlocnum": "cpp",
+    "xmemory": "cpp",
+    "xstddef": "cpp",
+    "xstring": "cpp",
+    "xtr1common": "cpp",
+    "xutility": "cpp"
   },
   "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

@@ -38,7 +38,7 @@ int main(void) {
     return tgt == vrt.datum();
   };
 
-  std::optional<gtor::Vertex<char>> target { g_v_e.bfs_all(search_lambda) };
+  std::optional<gtor::Vertex<char>> target { g_v_e.dfs_all(search_lambda, nullptr) };
 
   if (target) {
     std::cout << "Target found: " << target.value().datum() << "\n";

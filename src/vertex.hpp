@@ -37,7 +37,7 @@ namespace gtor {
         return *this;
       }
 
-      _id = v.mark();
+      _id = v.id();
       _datum = v.datum();
 
       return *this;

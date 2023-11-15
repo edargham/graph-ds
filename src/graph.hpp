@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vertex.hpp"
+#include "edge_list.hpp"
 
 #include <iostream>
 #include <exception>
@@ -16,37 +17,6 @@
 #include <type_traits>
 
 namespace gtor {
-  struct EdgeList
-  {
-    int idx_u;
-    int idx_v;
-    int weight;
-
-    bool operator >(const EdgeList& el) const {
-      return weight > el.weight;
-    }
-
-    bool operator >=(const EdgeList& el) const {
-      return weight >= el.weight;
-    }
-    
-    bool operator <(const EdgeList& el) const {
-      return weight < el.weight;
-    }
-
-    bool operator <=(const EdgeList& el) const {
-      return weight <= el.weight;
-    }
-
-    bool operator ==(const EdgeList& el) const {
-      return weight == el.weight;
-    }
-
-    bool operator !=(const EdgeList& el) const {
-      return weight != el.weight;
-    }
-  };
-
   template <typename T, int N>
   class Graph {
     private:
@@ -160,17 +130,16 @@ namespace gtor {
         std::queue<int> bfs_queue {};
         bfs_queue.emplace(initial_node_idx);
 
-        if constexpr (callback != nullptr) {
-          if constexpr (std::is_void_v<decltype(callback(_vertices.at(initial_node_idx)))>) {
-            callback(_vertices.at(initial_node_idx));
-          } else {
-            auto output { callback(_vertices.at(initial_node_idx)) };
-            if (output) {
-              _vertices[initial_node_idx].set_mark(1);
-              return _vertices.at(initial_node_idx);
-            }
+        if constexpr (std::is_void_v<decltype(callback(_vertices.at(initial_node_idx)))>) {
+          callback(_vertices.at(initial_node_idx));
+        } else {
+          auto output { callback(_vertices.at(initial_node_idx)) };
+          if (output) {
+            _vertices[initial_node_idx].set_mark(1);
+            return _vertices.at(initial_node_idx);
           }
         }
+        
         _vertices[initial_node_idx].set_mark(1);
 
         while (!bfs_queue.empty()) {
@@ -184,18 +153,66 @@ namespace gtor {
               bfs_queue.emplace(x);
 
               // TODO - Do any processing you want here.
-              if constexpr (callback != nullptr) {
-                if constexpr (std::is_void_v<decltype(callback(_vertices.at(x)))>) {
-                  callback(_vertices.at(x));
-                } else {
-                  auto output { callback(_vertices.at(x)) };
-                  if (output) {
-                    _vertices[x].set_mark(1);
-                    return _vertices.at(x);
-                  }
+              if constexpr (std::is_void_v<decltype(callback(_vertices.at(x)))>) {
+                callback(_vertices.at(x));
+              } else {
+                auto output { callback(_vertices.at(x)) };
+                if (output) {
+                  _vertices[x].set_mark(1);
+                  return _vertices.at(x);
                 }
               }
               
+              _vertices[x].set_mark(1);
+            }
+          }
+        }
+
+        return std::nullopt;
+      }
+
+      std::optional<Vertex<T>> bfs_all(void) {
+        for (Vertex<T>& vtx: _vertices) {
+          vtx.set_mark(0);
+        }
+
+        int initial_node { _vertices.at(0).order() };
+        std::optional<Vertex<T>> last { std::nullopt };
+
+        for (int i { initial_node }; i < _vertices.size(); i++) {
+          if (_vertices.at(i).mark() == 0) {
+            last = bfs(i, true);
+            
+            if (last) {
+              return last;
+            }
+          }
+        }
+
+        return last;
+      } 
+
+      std::optional<Vertex<T>> bfs(int initial_node_idx=0, bool searching_all=false) {
+        if (!searching_all) {
+          for (Vertex<T>& vtx: _vertices) {
+            vtx.set_mark(0);
+          }
+        }
+
+        std::queue<int> bfs_queue {};
+        bfs_queue.emplace(initial_node_idx);
+        
+        _vertices[initial_node_idx].set_mark(1);
+
+        while (!bfs_queue.empty()) {
+          int idx { bfs_queue.front() };
+          bfs_queue.pop();
+
+          std::vector<int> neigh { neighbors(idx) };
+
+          for (int x: neigh) {
+            if (_vertices.at(x).mark() == 0) {
+              bfs_queue.emplace(x);              
               _vertices[x].set_mark(1);
             }
           }
@@ -249,8 +266,13 @@ namespace gtor {
       } 
 
       template<typename U = std::nullptr_t, typename V = std::nullptr_t>
-      std::optional<Vertex<T>> dfs(int initial_node_idx=0, U pre_callback=nullptr, V post_callback=nullptr, bool searching_all=false) {
-        std::cout<< "dfs\n";
+      std::optional<Vertex<T>> dfs
+      (
+        int initial_node_idx=0, 
+        U pre_callback=nullptr, 
+        V post_callback=nullptr, 
+        bool searching_all=false
+      ) {
         if (!searching_all) {
           for (Vertex<T>& vtx: _vertices) {
             vtx.set_mark(0);
@@ -261,15 +283,13 @@ namespace gtor {
         dfs_stack.emplace(initial_node_idx);
         _vertices[initial_node_idx].set_mark(1);
 
-        if constexpr (pre_callback != nullptr) {
-          if constexpr (std::is_void_v<decltype(pre_callback(_vertices.at(initial_node_idx)))>) {
-            pre_callback(_vertices.at(initial_node_idx));
-          } else {
-            auto output { pre_callback(_vertices.at(initial_node_idx)) };
-            if (output) {
-              _vertices[initial_node_idx].set_mark(1);
-              return _vertices.at(initial_node_idx);
-            }
+        if constexpr (std::is_void_v<decltype(pre_callback(_vertices.at(initial_node_idx)))>) {
+          pre_callback(_vertices.at(initial_node_idx));
+        } else {
+          auto output { pre_callback(_vertices.at(initial_node_idx)) };
+          if (output) {
+            _vertices[initial_node_idx].set_mark(1);
+            return _vertices.at(initial_node_idx);
           }
         }
 
@@ -284,15 +304,13 @@ namespace gtor {
             dfs_stack.emplace(next);
 
             // TODO - Do any preprocessing you want here.
-            if constexpr (pre_callback != nullptr) {
-              if constexpr (std::is_void_v<decltype(pre_callback(_vertices.at(next)))>) {
-                pre_callback(_vertices.at(next));
-              } else {
-                auto output { pre_callback(_vertices.at(next)) };
-                if (output) {
-                  _vertices[next].set_mark(1);
-                  return _vertices.at(next);
-                }
+            if constexpr (std::is_void_v<decltype(pre_callback(_vertices.at(next)))>) {
+              pre_callback(_vertices.at(next));
+            } else {
+              auto output { pre_callback(_vertices.at(next)) };
+              if (output) {
+                _vertices[next].set_mark(1);
+                return _vertices.at(next);
               }
             }
           } else {
@@ -300,18 +318,68 @@ namespace gtor {
             dfs_stack.pop();
             
             // TODO - Do any postprocessing you want here.
-            if constexpr (post_callback != nullptr) {
-              if constexpr (std::is_void_v<decltype(post_callback(_vertices.at(l)))>) {
-                post_callback(_vertices.at(l));
-              } else {
-                auto output { post_callback(_vertices.at(l)) };
-                if (output) {
-                  _vertices[l].set_mark(1);
-                  return _vertices.at(l);
-                }
+            if constexpr (std::is_void_v<decltype(post_callback(_vertices.at(l)))>) {
+              post_callback(_vertices.at(l));
+            } else {
+              auto output { post_callback(_vertices.at(l)) };
+              if (output) {
+                _vertices[l].set_mark(1);
+                return _vertices.at(l);
               }
             }
+            
+            last = _vertices.at(l);
+          }
+        }
 
+        return last;
+      }
+      
+      std::optional<Vertex<T>> dfs_all(void) {
+        for (Vertex<T>& vtx: _vertices) {
+          vtx.set_mark(0);
+        }
+
+        int initial_node { _vertices.at(0).order() };
+        std::optional<Vertex<T>> last { std::nullopt };
+
+        for (int i { initial_node }; i < _vertices.size(); i++) {
+          if (_vertices.at(i).mark() == 0) {
+            last = dfs(i, true);
+            
+            if (last) {
+              return last;
+            }
+          }
+        }
+
+        return last;
+      } 
+
+      std::optional<Vertex<T>> dfs(int initial_node_idx=0, bool searching_all=false) {
+        if (!searching_all) {
+          for (Vertex<T>& vtx: _vertices) {
+            vtx.set_mark(0);
+          }
+        }
+
+        std::stack<int> dfs_stack {};
+        dfs_stack.emplace(initial_node_idx);
+        _vertices[initial_node_idx].set_mark(1);
+
+        Vertex<T> last { _vertices.at(initial_node_idx) };
+
+        while (!dfs_stack.empty()) {
+          int idx { dfs_stack.top() };
+          int next { is_neighbor(_adj_mat.at(idx)) };
+
+          if (next != -1) {
+            _vertices[next].set_mark(1);
+            dfs_stack.emplace(next);
+          } else {
+            int l { dfs_stack.top() };
+            dfs_stack.pop();
+            
             last = _vertices.at(l);
           }
         }

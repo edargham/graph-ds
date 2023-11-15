@@ -17,8 +17,8 @@ int main(void) {
   std::array<std::array<int, graph_size>, graph_size> edges {
     //                            A  B  C  D  E
     std::array<int, graph_size> { 0, 5, 0, 8, 0 }, // A
-    std::array<int, graph_size> { 5, 0, 0, 2, 0 }, // B
-    std::array<int, graph_size> { 0, 0, 1, 0, 6 }, // C
+    std::array<int, graph_size> { 5, 0, 1, 2, 0 }, // B
+    std::array<int, graph_size> { 0, 1, 1, 0, 6 }, // C
     std::array<int, graph_size> { 8, 2, 0, 0, 0 }, // D
     std::array<int, graph_size> { 0, 0, 6, 0, 0 }  // E
   };
@@ -38,7 +38,7 @@ int main(void) {
     return tgt == vrt.datum();
   };
 
-  std::optional<gtor::Vertex<char>> target { g_v_e.dfs_all(search_lambda, nullptr) };
+  std::optional<gtor::Vertex<char>> target { g_v_e.dfs_all(search_lambda, [](gtor::Vertex<char>& vrt) {}) };
 
   if (target) {
     std::cout << "Target found: " << target.value().datum() << "\n";

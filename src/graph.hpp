@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vertex.hpp"
+#include "edge.hpp"
 #include "edge_list.hpp"
 
 #include <iostream>

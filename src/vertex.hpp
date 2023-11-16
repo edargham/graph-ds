@@ -16,19 +16,16 @@ namespace gtor {
     Vertex(void)=default;
 
     Vertex(T datum):
-      _id     { generate_uuid_v4() },
-      _datum               { datum }
-    {}
+    _id     { uuid::generate_uuid_v4() },
+    _datum               { datum } { }
 
     Vertex(const Vertex<T>& v):
-      _id       { v._id },
-      _datum { v._datum }
-    { }
+    _id       { v._id },
+    _datum { v._datum } { }
 
     Vertex(const Vertex<T>&& v):
-      _id       { v._id },
-      _datum { v._datum }
-    { }    
+    _id       { v._id },
+    _datum { v._datum } { }    
 
     ~Vertex(void) { }
 
@@ -72,6 +69,10 @@ namespace gtor {
 
     std::shared_ptr<T> datum_pt(void) {
       return std::make_shared<T>(_datum);
+    }
+
+    void set_datum(T& datum) {
+      _datum = datum;
     }
   };
 }

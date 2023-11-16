@@ -1,6 +1,7 @@
 #include "uuid.hpp"
+using namespace uuid;
 
-std::string generate_uuid_v4() {
+std::string uuid::generate_uuid_v4() {
   std::random_device rd;
   std::mt19937 rng(rd());
   std::uniform_int_distribution<int> uni(0, 15);

@@ -4,4 +4,7 @@
 #include <sstream>
 #include <iomanip>
 
-std::string generate_uuid_v4();
+namespace uuid
+{
+  std::string generate_uuid_v4();
+}
